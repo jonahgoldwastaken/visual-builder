@@ -13,6 +13,7 @@
   "devDependencies": {
     "@rollup/plugin-wasm": "^5.1.2",
     "rollup-plugin-web-worker-loader": "^1.6.1",
+    "sass": "^1.37.5",
     "typescript": "^4.3.5",
     "vite": "^2.4.4"
   },

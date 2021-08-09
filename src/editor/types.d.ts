@@ -1,0 +1,3 @@
+type SaveEvent = {
+	code: string
+}

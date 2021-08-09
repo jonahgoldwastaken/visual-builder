@@ -1,0 +1,7 @@
+#editor {
+	grid-area: editor;
+	width: 80ch;
+	height: 100%;
+	display: grid;
+	grid-template-rows: auto 10rem;
+}

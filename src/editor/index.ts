@@ -1,7 +1,9 @@
+import './styles.scss'
 import * as monaco from 'monaco-editor'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
+import { createEditorLayout } from './layout'
 ;(<any>self).MonacoEnvironment = {
 	getWorker(_: any, label: string) {
 		if (label === 'json') {
@@ -15,38 +17,47 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 }
 
 export default function createEditor(
-	container: HTMLElement
-): monaco.editor.IStandaloneCodeEditor {
-	const editorContainer = document.createElement('div')
-	editorContainer.id = 'editor'
+	container: HTMLElement,
+	initialValue: string
+): HTMLDivElement {
+	const editorContainer = createEditorLayout()
 	container.appendChild(editorContainer)
 	monaco.languages.typescript.javascriptDefaults.addExtraLib(
 		`
-		declare const ctx: CanvasRenderingContext2D
-		declare const dataArray: UInt8Array
+		declare const buffer: Uint8Array;
+		declare const ctx: CanvasRenderingContext2D;
 `,
 		'global.d.ts'
 	)
-	const editor = monaco.editor.create(editorContainer, {
-		value: [
-			'const bassAmount = Math.max(',
-			'\t50,',
-			'\tdataArray.reduce(',
-			'\t\t(acc, curr, i) => (i >= Math.floor(dataArray.length / 4) ? acc : acc + curr),',
-			'\t\t0',
-			'\t) /',
-			'\t\t(dataArray.length / 4)',
-			');',
-			'ctx.fillStyle = `rgb(${bassAmount + 100},50,50)`;',
-			'var circle = new Path2D();',
-			'circle.arc(bassAmount * 1.5, bassAmount * 1.25, bassAmount, 0, 2 * Math.PI);',
-			'ctx.fill(circle);',
-		].join('\n'),
-		language: 'javascript',
-		minimap: {
-			enabled: false,
-		},
-		tabSize: 2,
+	const editor = monaco.editor.create(
+		editorContainer.querySelector('div:first-child')!,
+		{
+			value: initialValue,
+			language: 'javascript',
+			minimap: {
+				enabled: false,
+			},
+			tabSize: 2,
+			lineNumbers: 'on',
+			wrappingIndent: 'same',
+		}
+	)
+	registerListeners(editorContainer, editor)
+	return editorContainer
+}
+
+function registerListeners(
+	container: HTMLDivElement,
+	editor: monaco.editor.IStandaloneCodeEditor
+) {
+	const saveButton = container.querySelector('#save-button')!
+	saveButton.addEventListener('click', () => {
+		editor.getAction('editor.action.formatDocument').run()
+		const e = new CustomEvent('save', {
+			detail: {
+				code: editor.getValue(),
+			},
+		})
+		container.dispatchEvent(e)
 	})
-	return editor
 }
